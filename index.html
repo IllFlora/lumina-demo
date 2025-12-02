@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMINA CLINIC TOKYO | 美とWellnessの調和</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@200;300;400;500;700&display=swap');
+    </style>
+</head>
+<body class="bg-white text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900 cursor-none">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Custom Hook for LocalStorage ---
+        const useLocalStorage = (key, initialValue) => {
+            const [storedValue, setStoredValue] = useState(() => {
+                try {
+                    const item = window.localStorage.getItem(key);
+                    return item ? JSON.parse(item) : initialValue;
+                } catch (error) {
+                    console.error(error);
+                    return initialValue;
+                }
+            });
+            const setValue = (value) => {
+                try {
+                    const valueToStore = value instanceof Function ? value(storedValue) : value;
+                    setStoredValue(valueToStore);
+                    window.localStorage.setItem(key, JSON.stringify(valueToStore));
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+            return [storedValue, setValue];
+        };
+
+        // --- Icons ---
+        const IconBase = ({ children, className, ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
+        );
+        const MapPin = (props) => <IconBase {...props}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></IconBase>;
+        const Phone = (props) => <IconBase {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></IconBase>;
+        const Mail = (props) => <IconBase {...props}><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></IconBase>;
+        const Clock = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></IconBase>;
+        const Stethoscope = (props) => <IconBase {...props}><path d="M11 2v2" /><path d="M5 2v2" /><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" /><path d="M8 15a6 6 0 0 0 12 0v-3" /><circle cx="20" cy="10" r="2" /></IconBase>;
+        const Heart = (props) => <IconBase {...props}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></IconBase>;
+        const Sparkles = (props) => <IconBase {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></IconBase>;
+        const Microscope = (props) => <IconBase {...props}><path d="M6 18h8" /><path d="M3 22h18" /><path d="M14 22a7 7 0 1 0 0-14h-1" /><path d="M9 14h2" /><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z" /><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3" /></IconBase>;
+        const Menu = (props) => <IconBase {...props}><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></IconBase>;
+        const XIcon = (props) => <IconBase {...props}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></IconBase>;
+        const ArrowRight = (props) => <IconBase {...props}><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></IconBase>;
+        const ArrowLeft = (props) => <IconBase {...props}><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></IconBase>;
+        const Lock = (props) => <IconBase {...props}><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></IconBase>;
+        const Calendar = (props) => <IconBase {...props}><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></IconBase>;
+        const Trash2 = (props) => <IconBase {...props}><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></IconBase>;
+        const Plus = (props) => <IconBase {...props}><path d="M5 12h14" /><path d="M12 5v14" /></IconBase>;
+        const Edit = (props) => <IconBase {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></IconBase>;
+        const User = (props) => <IconBase {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></IconBase>;
+        const Shield = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></IconBase>;
+
+        // --- Mouse Stalker ---
+        const MouseStalker = () => {
+            const cursorRef = useRef(null);
+            const followerRef = useRef(null);
+            useEffect(() => {
+                const moveCursor = (e) => {
+                    const { clientX, clientY } = e;
+                    if (cursorRef.current) cursorRef.current.style.transform = `translate3d(${clientX}px, ${clientY}px, 0)`;
+                    if (followerRef.current) followerRef.current.animate({ transform: `translate3d(${clientX}px, ${clientY}px, 0)` }, { duration: 500, fill: 'forwards', easing: 'ease-out' });
+                };
+                window.addEventListener('mousemove', moveCursor);
+                return () => window.removeEventListener('mousemove', moveCursor);
+            }, []);
+            return (
+                <React.Fragment>
+                    <div ref={cursorRef} className="fixed top-0 left-0 w-3 h-3 bg-teal-500 rounded-full pointer-events-none z-[9999] mix-blend-difference -translate-x-1/2 -translate-y-1/2 will-change-transform" style={{ marginTop: '-6px', marginLeft: '-6px' }} />
+                    <div ref={followerRef} className="fixed top-0 left-0 w-12 h-12 border border-teal-500 rounded-full pointer-events-none z-[9999] mix-blend-difference transition-transform duration-300 ease-out will-change-transform" style={{ marginTop: '-24px', marginLeft: '-24px' }} />
+                </React.Fragment>
+            );
+        };
+
+        // --- Header ---
+        const Header = ({ currentPage, navigate, isScrolled }) => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const navItems = [
+                { id: 'services', label: '診療案内', en: 'SERVICES' },
+                { id: 'doctors', label: '医師紹介', en: 'DOCTORS' },
+                { id: 'news', label: 'お知らせ', en: 'NEWS' },
+                { id: 'access', label: 'アクセス', en: 'ACCESS' },
+                { id: 'contact', label: 'お問い合わせ', en: 'CONTACT' },
+            ];
+            return (
+                <React.Fragment>
+                    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 py-4 ${isScrolled || isMenuOpen || (currentPage !== 'home' && currentPage !== 'access') ? 'bg-white/95 backdrop-blur-md border-b border-slate-100 text-slate-900 shadow-sm' : 'bg-transparent text-white'}`}>
+                        <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
+                            <a href="#" onClick={(e) => { e.preventDefault(); navigate('home'); }} className="relative z-50 group flex items-center gap-3">
+                                <div className={`w-10 h-10 border flex items-center justify-center transition-colors duration-300 ${isScrolled || isMenuOpen || (currentPage !== 'home' && currentPage !== 'access') ? 'border-slate-900 group-hover:bg-slate-900' : 'border-white group-hover:bg-white'}`}>
+                                    <span className={`font-en text-lg font-light transition-colors ${isScrolled || isMenuOpen || (currentPage !== 'home' && currentPage !== 'access') ? 'text-slate-900 group-hover:text-white' : 'text-white group-hover:text-slate-900'}`}>L</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className={`font-en text-xl tracking-[0.3em] font-light leading-none ${isScrolled || isMenuOpen || (currentPage !== 'home' && currentPage !== 'access') ? 'text-slate-900' : 'text-white'}`}>LUMINA</span>
+                                    <span className={`text-[8px] tracking-[0.4em] mt-1 uppercase ${isScrolled || isMenuOpen || (currentPage !== 'home' && currentPage !== 'access') ? 'text-slate-400' : 'text-slate-300'}`}>Clinic Tokyo</span>
+                                </div>
+                            </a>
+                            <nav className="hidden md:flex items-center gap-12">
+                                {navItems.map((item) => (
+                                    <a key={item.id} href={`#${item.id}`} onClick={(e) => { e.preventDefault(); navigate(item.id); }} className="group relative py-2">
+                                        <span className={`font-en text-sm tracking-[0.2em] transition-colors block ${isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'text-slate-600 group-hover:text-teal-800' : 'text-white/80 group-hover:text-teal-200'}`}>{item.label}</span>
+                                        <span className={`block text-[9px] tracking-widest opacity-0 group-hover:opacity-100 transition-all absolute -top-3.5 left-0 w-full text-center transform translate-y-1 group-hover:translate-y-0 pointer-events-none ${isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'text-slate-400' : 'text-slate-300'}`}>{item.en}</span>
+                                        <span className={`absolute bottom-0 left-0 h-[1px] transition-all duration-300 ease-out w-0 group-hover:w-full ${isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'bg-teal-800' : 'bg-white'}`}></span>
+                                    </a>
+                                ))}
+                            </nav>
+                            <div className="hidden md:flex items-center gap-6">
+                                <div className="text-right hidden lg:block">
+                                    <p className={`font-en text-xs tracking-widest ${isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'text-slate-900' : 'text-white'}`}>03-1234-5678</p>
+                                    <p className={`text-[9px] tracking-wider ${isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'text-slate-400' : 'text-slate-300'}`}>10:00 - 19:00 (Thu/Sun Closed)</p>
+                                </div>
+                                <a href="#reserve" onClick={(e) => { e.preventDefault(); navigate('reserve'); }}>
+                                    <button className={`inline-flex items-center justify-center h-9 px-6 py-6 border transition-all duration-300 ${isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'bg-slate-900 text-white hover:bg-teal-800 border-slate-900 hover:border-teal-800' : 'bg-white text-slate-900 hover:bg-slate-100 border-white hover:border-slate-100'}`}>
+                                        <span className="font-en text-xs tracking-[0.2em]">WEB予約</span>
+                                    </button>
+                                </a>
+                            </div>
+                            <button className="md:hidden relative z-50 w-12 h-12 flex flex-col items-center justify-center gap-1.5 group" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                                <span className={`block w-6 h-[1px] transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2.5 bg-slate-900' : (isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'bg-slate-800' : 'bg-white')}`}></span>
+                                <span className={`block w-6 h-[1px] transition-all duration-300 ${isMenuOpen ? 'opacity-0 bg-slate-900' : (isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'bg-slate-800' : 'bg-white')}`}></span>
+                                <span className={`block w-6 h-[1px] transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2.5 bg-slate-900' : (isScrolled || (currentPage !== 'home' && currentPage !== 'access') ? 'bg-slate-800' : 'bg-white')}`}></span>
+                            </button>
+                        </div>
+                    </header>
+                    <div className={`fixed inset-0 bg-white z-40 transition-transform duration-500 flex flex-col justify-center items-center ${isMenuOpen ? 'translate-y-0' : '-translate-y-full'}`}>
+                        <nav className="flex flex-col gap-8 text-center">
+                            {navItems.map((item) => (
+                                <a key={item.id} href={`#${item.id}`} onClick={(e) => { e.preventDefault(); navigate(item.id); setIsMenuOpen(false); }} className="text-2xl text-slate-800 font-light tracking-widest">
+                                    {item.label}
+                                    <span className="block text-xs font-en text-teal-600 mt-2">{item.en}</span>
+                                </a>
+                            ))}
+                            <a href="#reserve" onClick={(e) => { e.preventDefault(); navigate('reserve'); setIsMenuOpen(false); }} className="mt-8">
+                                <button className="bg-slate-900 text-white px-12 py-4 text-sm tracking-widest hover:bg-teal-800 transition-colors">WEB予約</button>
+                            </a>
+                        </nav>
+                    </div>
+                </React.Fragment>
+            );
+        };
+
+        // --- Footer ---
+        const Footer = ({ navigate }) => (
+            <footer className="bg-slate-900 text-slate-400 py-16 border-t border-slate-800 relative z-10">
+                <div className="container mx-auto px-6 md:px-12">
+                    <div className="flex flex-col lg:flex-row justify-between items-start gap-12 mb-12">
+                        <div className="lg:w-1/3">
+                            <h2 className="font-en text-3xl text-white tracking-widest mb-2">LUMINA CLINIC</h2>
+                            <p className="text-xs tracking-widest opacity-50 mb-8">TOKYO OMOTESANDO</p>
+                            <p className="text-sm leading-loose mb-6">〒107-0062<br />東京都港区南青山 5-1-1 LUMINAビル 3F<br />TEL: 03-1234-5678</p>
+                            <div className="flex gap-4">
+                                {['INSTAGRAM', 'FACEBOOK', 'X'].map(social => (<a key={social} href="#" className="font-en text-[10px] tracking-widest text-slate-500 hover:text-white transition-colors border border-slate-700 px-3 py-2">{social}</a>))}
+                            </div>
+                        </div>
+                        <div className="flex gap-12 lg:w-1/3">
+                            <ul className="space-y-4 text-sm">
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('services') }} className="hover:text-white transition-colors">診療案内</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('doctors') }} className="hover:text-white transition-colors">医師紹介</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('news') }} className="hover:text-white transition-colors">お知らせ</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('access') }} className="hover:text-white transition-colors">アクセス</a></li>
+                            </ul>
+                            <ul className="space-y-4 text-sm">
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('recruit') }} className="hover:text-white transition-colors">採用情報</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('privacy') }} className="hover:text-white transition-colors">プライバシーポリシー</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('contact') }} className="hover:text-white transition-colors">お問い合わせ</a></li>
+                            </ul>
+                        </div>
+                        <div className="lg:w-1/3 w-full">
+                            <h3 className="font-en text-xs tracking-widest text-slate-500 mb-4">OPENING HOURS</h3>
+                            <div className="w-full overflow-x-auto">
+                                <table className="w-full text-sm text-center border-collapse bg-transparent min-w-[320px]">
+                                    <thead>
+                                        <tr className="bg-slate-800/50 text-slate-300">
+                                            <th className="py-3 px-2 font-normal font-en w-[25%] text-left pl-4">Time</th>
+                                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(d => <th key={d} className="py-3 px-1 font-normal font-en w-[10.7%]">{d}</th>)}
+                                            <th className="py-3 px-1 font-normal font-en text-blue-400 w-[10.7%]">Sat</th>
+                                            <th className="py-3 px-1 font-normal font-en text-red-400 w-[10.7%]">Sun</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-slate-400 border border-slate-700">
+                                        <tr className="border-b border-slate-700">
+                                            <td className="py-4 px-2 whitespace-nowrap font-medium text-left pl-4 text-slate-300">10:00 - 13:00</td>
+                                            <td>●</td><td>●</td><td>●</td><td>/</td><td>●</td><td>●</td><td>/</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="py-4 px-2 whitespace-nowrap font-medium text-left pl-4 text-slate-300">15:00 - 19:00</td>
+                                            <td>●</td><td>●</td><td>●</td><td>/</td><td>●</td><td>▲</td><td>/</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p className="text-[10px] mt-2 text-right text-slate-500">▲: 15:00 - 17:00 / 休診日: 木曜・日曜・祝日</p>
+                        </div>
+                    </div>
+                    <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] tracking-widest">
+                        <p>© 2025 LUMINA CLINIC TOKYO. All Rights Reserved.</p>
+                        <a href="#" onClick={(e) => { e.preventDefault(); navigate('admin') }} className="opacity-30 hover:opacity-100 transition-opacity">Admin</a>
+                    </div>
+                </div>
+            </footer>
+        );
+
+        // --- Pages ---
+        const HomePage = ({ navigate, newsData }) => {
+            const heroImages = [
+                "https://images.unsplash.com/photo-1570105954248-fa0c1376edfe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920",
+                "https://images.unsplash.com/photo-1583752582921-23c7d75c75e0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920",
+                "https://images.unsplash.com/photo-1626726183219-e230165db244?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920",
+                "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920"
+            ];
+            const [currentImageIndex, setCurrentImageIndex] = useState(0);
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+                }, 3000);
+                return () => clearInterval(interval);
+            }, []);
+
+            const latestNews = newsData ? newsData.slice(0, 4) : [];
+
+            return (
+                <main className="w-full overflow-hidden">
+                    <section className="relative w-full h-screen min-h-[800px] flex flex-col justify-center overflow-hidden bg-slate-900">
+                        <div className="absolute inset-0 z-0">
+                            {heroImages.map((src, index) => (
+                                <div key={index} className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}>
+                                    <img src={src} alt={`Clinic Atmosphere ${index + 1}`} className="w-full h-full object-cover" />
+                                </div>
+                            ))}
+                            <div className="absolute inset-0 bg-slate-900/40 z-10"></div>
+                            <div className="absolute inset-0 bg-teal-900/20 mix-blend-overlay z-10"></div>
+                        </div>
+                        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none select-none z-10 flex items-center">
+                            <div className="absolute top-[15%] w-full">
+                                <div className="font-en text-[20vw] font-thin text-white/5 leading-none whitespace-nowrap animate-marquee">
+                                    MEDICAL ARTISTRY & WELLNESS — LUMINA — MEDICAL ARTISTRY & WELLNESS — LUMINA —
+                                </div>
+                            </div>
+                        </div>
+                        <div className="absolute top-32 right-12 z-20 text-right hidden md:block">
+                            <div className="font-en text-xs tracking-[0.3em] text-white/80 space-y-2">
+                                <p>TOKYO / OMOTESANDO</p>
+                                <p>EST. 2025</p>
+                            </div>
+                        </div>
+                        <div className="container mx-auto px-6 md:px-24 relative z-20 h-full flex flex-col justify-center">
+                            <div className="w-full max-w-[90vw] animate-fade-in-up">
+                                <div className="flex items-center gap-6 mb-12">
+                                    <span className="font-en text-6xl text-white/20 font-bold leading-none absolute -left-4 -top-12 -z-10 select-none">01</span>
+                                    <h2 className="font-en text-[10px] md:text-sm tracking-[0.2em] md:tracking-[0.4em] text-teal-100 font-medium uppercase border border-teal-100/30 px-3 py-1 md:px-4 md:py-1 rounded-full bg-teal-900/30 backdrop-blur-sm">The New Standard of Beauty</h2>
+                                </div>
+                                <h1 className="font-bold leading-[1] tracking-tighter text-white mb-12 w-full relative">
+                                    <span className="block overflow-hidden"><span className="block text-[clamp(4rem,9vw,180px)]">美しさと</span></span>
+                                    <span className="block overflow-hidden"><span className="block text-[clamp(4rem,9vw,180px)] flex items-baseline gap-4"><span className="font-en italic font-thin text-teal-200/80 text-[0.9em]">Wellness</span><span className="text-[0.4em] font-normal tracking-wide text-white/80 -ml-2 mb-4 block">の調和。</span></span></span>
+                                </h1>
+                                <div className="flex flex-col md:flex-row gap-12 items-end">
+                                    <p className="text-xs md:text-sm font-medium leading-loose tracking-widest text-white/80 max-w-md border-l border-white/30 pl-6">
+                                        <span className="font-en text-xs text-teal-200/70 block mb-2 tracking-wider">OUR MISSION</span>
+                                        最新の医療技術と、心安らぐ空間。<br />あなたの生涯のパートナーとして。<br />LUMINA CLINICは、新しい医療の形を提案します。
+                                    </p>
+                                    <div className="mb-2">
+                                        <button onClick={() => navigate('reserve')} className="group relative px-10 py-6 bg-white text-slate-900 overflow-hidden min-w-[240px]">
+                                            <div className="relative z-10 flex flex-col items-start">
+                                                <span className="font-en tracking-[0.3em] text-xs group-hover:text-white transition-colors duration-300">WEB予約</span>
+                                                <span className="text-[9px] text-slate-500 group-hover:text-slate-200 transition-colors duration-300 mt-1 tracking-widest">BOOK APPOINTMENT</span>
+                                            </div>
+                                            <div className="absolute inset-0 bg-teal-800 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out z-0"></div>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10"><span className="font-en text-lg group-hover:text-white transition-colors duration-300">→</span></div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="absolute bottom-0 left-0 w-full h-24 border-t border-slate-100 flex items-center justify-between px-6 md:px-12 bg-white z-30">
+                            <div className="flex gap-8 items-center">
+                                <span className="font-en text-[10px] font-bold tracking-[0.3em] text-slate-900">SCROLL TO EXPLORE</span>
+                                <div className="w-32 h-[1px] bg-slate-200 overflow-hidden relative">
+                                    <div className="absolute top-0 left-0 w-full h-full bg-slate-900 animate-slide-right"></div>
+                                </div>
+                            </div>
+                            <div className="hidden md:flex gap-12 items-center">
+                                <div className="flex flex-col items-end">
+                                    <span className="font-en text-slate-400 text-[10px] tracking-widest">CURRENT STATUS</span>
+                                    <span className="font-en text-xs tracking-widest text-teal-700 flex items-center gap-2">
+                                        <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>OPEN TODAY 10:00 - 19:00
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <div className="w-full bg-white py-12 border-b border-slate-100">
+                        <div className="container mx-auto px-6 md:px-12 flex flex-col md:flex-row md:items-center gap-8">
+                            <div className="md:w-1/4"><h3 className="font-en text-3xl font-light tracking-wider">News</h3><p className="text-xs text-slate-400 tracking-widest mt-2">お知らせ</p></div>
+                            <div className="md:w-3/4 flex flex-col gap-6">
+                                {latestNews.map((item, idx) => (
+                                    <div key={item.id} onClick={() => navigate('news_detail', item.id)} className="group flex flex-col md:flex-row md:items-center gap-2 md:gap-8 border-b border-slate-100 pb-4 hover:border-slate-300 transition-colors cursor-pointer">
+                                        <div className="flex items-center gap-4"><span className="font-en text-sm text-slate-500 w-24">{item.date}</span><span className="text-[10px] px-2 py-1 bg-slate-100 text-slate-600 tracking-wider min-w-[80px] text-center">{item.tag}</span></div>
+                                        <p className="text-sm md:text-base text-slate-700 group-hover:text-teal-800 transition-colors line-clamp-1">{item.title}</p>
+                                    </div>
+                                ))}
+                                <div className="text-right"><button onClick={() => navigate('news')} className="text-xs text-slate-400 hover:text-teal-700 transition-colors tracking-widest border-b border-transparent hover:border-teal-700 pb-1">VIEW ALL NEWS</button></div>
+                            </div>
+                        </div>
+                    </div>
+                    <section className="py-24 md:py-32 bg-white" id="services">
+                        <div className="container mx-auto px-6 md:px-12">
+                            <div className="mb-20 text-center">
+                                <span className="font-en text-sm tracking-[0.3em] text-slate-400 uppercase block mb-4">Our Menu</span>
+                                <h2 className="text-3xl md:text-5xl font-light text-slate-900 mb-6">Medical Services</h2>
+                                <div className="w-[1px] h-12 bg-slate-200 mx-auto"></div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 border-t border-l border-slate-100">
+                                {[
+                                    { icon: <Stethoscope className="w-full h-full" />, en: 'Internal Medicine', jp: '一般内科', desc: '風邪や生活習慣病など、日常的な体調不良から長期的な健康管理まで。' },
+                                    { icon: <Heart className="w-full h-full" />, en: 'Cardiology', jp: '循環器内科', desc: '心臓や血管の専門的なケア。高血圧や動悸などのご相談も。' },
+                                    { icon: <Sparkles className="w-full h-full" />, en: 'Aesthetic', jp: '美容皮膚科', desc: '肌本来の美しさを引き出す、医療機関ならではのアプローチ。' },
+                                    { icon: <Microscope className="w-full h-full" />, en: 'Check-up', jp: '健康診断・ドック', desc: '最新機器を用いた精密検査で、早期発見と予防をサポート。' }
+                                ].map((service, idx) => (
+                                    <div key={idx} onClick={() => navigate('services')} className="group relative p-10 border-r border-b border-slate-100 hover:bg-slate-50 transition-all duration-500 cursor-pointer">
+                                        <div className="mb-8 text-slate-300 group-hover:text-teal-600 transition-colors duration-500 w-8 h-8">{service.icon}</div>
+                                        <h3 className="font-en text-2xl font-light mb-2 text-slate-800 group-hover:translate-x-2 transition-transform duration-300">{service.en}</h3>
+                                        <h4 className="text-sm font-medium text-slate-500 mb-4 group-hover:translate-x-2 transition-transform duration-300 delay-75">{service.jp}</h4>
+                                        <p className="text-xs leading-relaxed text-slate-400 group-hover:text-slate-600 transition-colors">{service.desc}</p>
+                                        <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"><span className="text-teal-600 text-xl">↗</span></div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-16 text-center">
+                                <p className="text-sm text-slate-500 mb-8">※各診療科の詳しい内容は詳細ページをご覧ください</p>
+                                <button onClick={() => navigate('services')} className="border border-slate-300 px-10 py-4 text-sm tracking-widest hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all duration-300">VIEW ALL SERVICES</button>
+                            </div>
+                        </div>
+                    </section>
+                    <section className="py-24 md:py-32 bg-slate-900 text-white overflow-hidden" id="doctors">
+                        <div className="container mx-auto px-6 md:px-12">
+                            <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center">
+                                <div className="md:w-5/12 order-2 md:order-1">
+                                    <span className="font-en text-teal-400 tracking-widest text-sm block mb-6">DIRECTOR</span>
+                                    <h2 className="text-3xl md:text-4xl font-light mb-2">高橋 健人</h2>
+                                    <h3 className="font-en text-2xl text-slate-400 font-light mb-8">Kento Takahashi, M.D.</h3>
+                                    <div className="space-y-6 text-slate-300 leading-loose text-sm font-light">
+                                        <p>都内大学病院にて循環器内科医として10年以上のキャリアを積み、 「病気だけでなく、人を診る」医療の実践を目指し、LUMINA CLINICを開院。</p>
+                                        <p>専門知識に基づいた的確な診断と、患者様のライフスタイルに合わせた治療方針の提案を大切にしています。 些細なことでもお気軽にご相談ください。</p>
+                                    </div>
+                                    <div className="mt-10 pt-8 border-t border-slate-700">
+                                        <dl className="grid grid-cols-1 gap-4 text-sm">
+                                            <div className="flex flex-col sm:flex-row sm:gap-8"><dt className="text-slate-500 w-24">経歴</dt><dd className="text-slate-300">東京医科歯科大学医学部 卒業<br />同大学附属病院 循環器内科 助教</dd></div>
+                                            <div className="flex flex-col sm:flex-row sm:gap-8"><dt className="text-slate-500 w-24">資格</dt><dd className="text-slate-300">日本内科学会 総合内科専門医<br />日本循環器学会 循環器専門医</dd></div>
+                                        </dl>
+                                    </div>
+                                </div>
+                                <div className="md:w-7/12 order-1 md:order-2 relative">
+                                    <div className="relative z-10">
+                                        <div className="aspect-[3/4] md:aspect-[4/3] w-full bg-slate-200 flex items-center justify-center text-slate-400 font-en tracking-widest text-xl">NO PHOTO</div>
+                                    </div>
+                                    <div className="absolute -top-10 -right-10 w-64 h-64 border border-slate-700 z-0 hidden md:block"></div>
+                                </div>
+                            </div>
+                            <div className="mt-20 text-center">
+                                <button onClick={() => navigate('doctors')} className="border border-slate-700 text-slate-300 px-10 py-4 text-sm tracking-widest hover:bg-white hover:text-slate-900 hover:border-white transition-all duration-300">VIEW ALL DOCTORS</button>
+                            </div>
+                        </div>
+                    </section>
+                    <section className="py-24 bg-slate-50" id="access">
+                        <div className="container mx-auto px-6 md:px-12">
+                            <div className="flex flex-col lg:flex-row gap-12">
+                                <div className="lg:w-1/3 space-y-10">
+                                    <div>
+                                        <h2 className="font-en text-4xl font-light mb-8 text-slate-900">Access</h2>
+                                        <div className="flex items-start gap-4 mb-6">
+                                            <MapPin className="w-6 h-6 text-teal-600 shrink-0 mt-1" />
+                                            <div>
+                                                <p className="font-medium text-lg mb-1">〒107-0062</p>
+                                                <p className="text-slate-600">東京都港区南青山 5-1-1<br />LUMINAビル 3F</p>
+                                                <p className="text-sm text-slate-400 mt-2">表参道駅 B1出口より徒歩2分</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <Phone className="w-6 h-6 text-teal-600 shrink-0" />
+                                            <div>
+                                                <p className="font-en text-3xl text-slate-800 tracking-wider">03-1234-5678</p>
+                                                <p className="text-xs text-slate-400">お気軽にお問い合わせください</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <Clock className="w-5 h-5 text-teal-600" />
+                                            <span className="font-medium">診療時間</span>
+                                        </div>
+                                        <table className="w-full text-sm text-center border-collapse bg-white shadow-sm">
+                                            <thead>
+                                                <tr className="bg-slate-100 text-slate-600">
+                                                    <th className="py-3 font-normal">Time</th>
+                                                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(d => <th key={d} className="py-3 font-normal">{d}</th>)}
+                                                    <th className="py-3 font-normal text-blue-400">Sat</th>
+                                                    <th className="py-3 font-normal text-red-400">Sun</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-slate-600">
+                                                <tr className="border-b border-slate-100">
+                                                    <td className="py-3 px-2 whitespace-nowrap text-xs">10:00 - 13:00</td>
+                                                    <td>●</td><td>●</td><td>●</td><td>/</td><td>●</td><td>●</td><td>/</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-3 px-2 whitespace-nowrap text-xs">15:00 - 19:00</td>
+                                                    <td>●</td><td>●</td><td>●</td><td>/</td><td>●</td><td>▲</td><td>/</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <p className="text-[10px] text-slate-400 mt-2 text-right">▲: 15:00 - 17:00 / 休診日: 木曜・日曜・祝日</p>
+                                    </div>
+                                </div>
+                                <div className="lg:w-2/3 h-[400px] bg-slate-200 grayscale hover:grayscale-0 transition-all duration-500 ease-in-out relative">
+                                    <iframe height="100%" loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.7479754683745!2d139.7103883!3d35.6650584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188c9814f4a8a9%3A0x1e1d0f283a133f0!2sOmotesando%20Station!5e0!3m2!1sen!2sjp!4v1625000000000!5m2!1sen!2sjp" style={{ border: 0 }} title="Clinic Location" width="100%"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            );
+        };
+
+        const AccessPage = () => (
+            <main>
+                <div className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
+                    <div className="absolute inset-0 z-0">
+                        <img alt="Access" className="w-full h-full object-cover opacity-40" src="https://images.unsplash.com/photo-1583752582921-23c7d75c75e0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" />
+                    </div>
+                    <div className="relative z-10 text-center mt-20 md:mt-24">
+                        <h1 className="font-en text-4xl md:text-6xl font-light tracking-widest mb-4 animate-fade-in-up">Access</h1>
+                        <p className="text-xs md:text-sm tracking-[0.3em] text-slate-300 uppercase animate-fade-in-up delay-100">アクセス</p>
+                    </div>
+                </div>
+                <section className="py-24 container mx-auto px-6 md:px-12">
+                    <div className="flex flex-col lg:flex-row gap-16">
+                        <div className="lg:w-1/2 space-y-12">
+                            <div>
+                                <h3 className="font-en text-2xl tracking-widest mb-8 border-b border-slate-200 pb-4">LOCATION</h3>
+                                <div className="flex items-start gap-6">
+                                    <MapPin className="w-8 h-8 text-slate-900 shrink-0 mt-1" />
+                                    <div>
+                                        <p className="font-en text-lg mb-2 font-medium">LUMINA CLINIC TOKYO</p>
+                                        <p className="font-medium text-xl mb-2">〒107-0062</p>
+                                        <p className="text-slate-600 text-lg leading-relaxed">東京都港区南青山 5-1-1<br />LUMINAビル 3F</p>
+                                        <div className="mt-6 p-4 bg-slate-50 text-sm text-slate-600 leading-loose">
+                                            <span className="font-bold text-teal-700">東京メトロ「表参道駅」B1出口より徒歩2分</span><br />B1出口を出て青山通りを渋谷方面へ直進。 最初の交差点を左折し、50mほど進んだ左手の白いビルの3階です。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="font-en text-2xl tracking-widest mb-8 border-b border-slate-200 pb-4">CONTACT</h3>
+                                <div className="flex items-center gap-6 mb-6">
+                                    <Phone className="w-8 h-8 text-slate-900 shrink-0" />
+                                    <div><p className="text-xs text-slate-400 mb-1">お電話でのご予約・お問い合わせ</p><p className="font-en text-4xl text-slate-900 tracking-wider">03-1234-5678</p></div>
+                                </div>
+                                <div className="flex items-center gap-6">
+                                    <Mail className="w-8 h-8 text-slate-900 shrink-0" />
+                                    <div><p className="text-xs text-slate-400 mb-1">メールでのお問い合わせ</p><p className="font-en text-lg text-slate-900 underline">info@lumina-clinic.jp</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="lg:w-1/2 h-[500px] lg:h-auto bg-slate-100 relative grayscale hover:grayscale-0 transition-all duration-500 ease-in-out">
+                            <iframe height="100%" loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.7479754683745!2d139.7103883!3d35.6650584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188c9814f4a8a9%3A0x1e1d0f283a133f0!2sOmotesando%20Station!5e0!3m2!1sen!2sjp!4v1625000000000!5m2!1sen!2sjp" style={{ border: 0, filter: 'grayscale(100%)' }} title="Clinic Location" width="100%"></iframe>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        );
+
+        const DoctorsPage = () => (
+            <main>
+                <div className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
+                    <div className="absolute inset-0 z-0">
+                        <img alt="Doctors" className="w-full h-full object-cover opacity-40" src="https://images.unsplash.com/photo-1626726183219-e230165db244?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" />
+                    </div>
+                    <div className="relative z-10 text-center mt-20 md:mt-24">
+                        <h1 className="font-en text-4xl md:text-6xl font-light tracking-widest mb-4 animate-fade-in-up">Doctors</h1>
+                        <p className="text-xs md:text-sm tracking-[0.3em] text-slate-300 uppercase animate-fade-in-up delay-100">医師紹介</p>
+                    </div>
+                </div>
+                <section className="py-24 container mx-auto px-6 md:px-12">
+                    <div className="flex flex-col lg:flex-row gap-16 mb-32">
+                        <div className="lg:w-1/2">
+                            <div className="relative animate-fade-in-left">
+                                <div className="w-full aspect-[3/4] bg-slate-200 flex items-center justify-center text-slate-400 font-en tracking-widest text-2xl">NO PHOTO</div>
+                                <div className="absolute bottom-0 left-0 bg-white p-6 pr-12 border-t-4 border-teal-700">
+                                    <span className="font-en text-xs tracking-widest text-slate-400 block mb-1">DIRECTOR</span>
+                                    <span className="font-en text-2xl text-slate-900">Kento Takahashi</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="lg:w-1/2 pt-12 animate-fade-in-right">
+                            <h3 className="text-3xl font-light mb-2">高橋 健人</h3>
+                            <p className="font-en text-slate-400 text-sm tracking-wider mb-8">Kento Takahashi, M.D.</p>
+                            <h4 className="font-bold text-lg mb-4">「美」と「健康」の調和を目指して</h4>
+                            <p className="text-slate-600 leading-loose mb-8 text-justify">
+                                私はこれまで、大学病院の循環器内科にて、命に関わる重篤な疾患の治療に携わってまいりました。 その経験の中で痛感したのは、「病気になってから治す」ことの難しさと、「日々の健康管理」の大切さです。<br /><br />
+                                LUMINA CLINICでは、最新の医療機器による的確な診断はもちろん、 患者様が自身の体と向き合い、より美しく、より健康に生きていくためのパートナーでありたいと考えています。 どんな些細な不調や悩みでも、まずはお気軽にご相談ください。
+                            </p>
+                            <div className="bg-slate-50 p-8">
+                                <h5 className="font-en text-sm tracking-widest mb-6 border-b border-slate-200 pb-2">BIOGRAPHY</h5>
+                                <ul className="space-y-4 text-sm text-slate-600">
+                                    <li className="flex gap-4"><span className="w-16 shrink-0 text-slate-400">2010</span><span>東京医科歯科大学医学部 卒業</span></li>
+                                    <li className="flex gap-4"><span className="w-16 shrink-0 text-slate-400">2010</span><span>東京医科歯科大学附属病院 研修医</span></li>
+                                    <li className="flex gap-4"><span className="w-16 shrink-0 text-slate-400">2012</span><span>同大学附属病院 循環器内科 入局</span></li>
+                                    <li className="flex gap-4"><span className="w-16 shrink-0 text-slate-400">2018</span><span>米国 Cleveland Clinic 留学</span></li>
+                                    <li className="flex gap-4"><span className="w-16 shrink-0 text-slate-400">2025</span><span>LUMINA CLINIC TOKYO 開院</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="font-en text-2xl mb-12 text-center tracking-widest">SPECIALISTS</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {[
+                                { name: '佐藤 美咲', en: 'Misaki Sato', role: '美容皮膚科医 / 日本皮膚科学会専門医', desc: '女性ならではの視点で、繊細な肌の悩みに寄り添います。自然な美しさを引き出す治療が得意です。' },
+                                { name: '鈴木 一郎', en: 'Ichiro Suzuki', role: '麻酔科医 / 救急科専門医', desc: '痛みの少ない治療と、安全な全身管理を徹底しています。リラックスして施術を受けていただけます。' },
+                                { name: 'Nurses & Staff', en: 'LUMINA Team', role: '医療スタッフ', desc: 'ホスピタリティ溢れるスタッフが、皆様の快適なご滞在をサポートいたします。' }
+                            ].map((staff, idx) => (
+                                <div key={idx} className="group">
+                                    <div className="overflow-hidden mb-6">
+                                        <div className="w-full aspect-[3/4] bg-slate-200 flex items-center justify-center text-slate-400 font-en tracking-widest"><span className="font-en">NO PHOTO</span></div>
+                                    </div>
+                                    <h4 className="text-lg font-medium">{staff.name}</h4>
+                                    <p className="font-en text-xs text-slate-400 mb-2">{staff.en}</p>
+                                    <p className="text-sm text-teal-700 mb-4">{staff.role}</p>
+                                    <p className="text-xs text-slate-500 leading-relaxed">{staff.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            </main>
+        );
+
+        const ServicesPage = ({ navigate, coursesData }) => (
+            <main>
+                <div className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
+                    <div className="absolute inset-0 z-0">
+                        <img alt="Medical Services" className="w-full h-full object-cover opacity-40" src="https://images.unsplash.com/photo-1583752582921-23c7d75c75e0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" />
+                    </div>
+                    <div className="relative z-10 text-center mt-20 md:mt-24">
+                        <h1 className="font-en text-4xl md:text-6xl font-light tracking-widest mb-4 animate-fade-in-up">Medical Services</h1>
+                        <p className="text-xs md:text-sm tracking-[0.3em] text-slate-300 uppercase animate-fade-in-up delay-100">診療案内</p>
+                    </div>
+                </div>
+                <section className="py-24 px-6 md:px-12 container mx-auto">
+                    <div className="max-w-4xl mx-auto text-center mb-24">
+                        <h3 className="text-2xl md:text-3xl font-light leading-relaxed mb-8">あなたにとって最適な医療を、<br />オーダーメイドで提供します。</h3>
+                        <p className="text-slate-500 leading-loose text-justify md:text-center">当院では、内科・循環器内科といった保険診療から、美容皮膚科や予防医療としての健康診断まで、 トータルで患者様の健康と美をサポートする体制を整えています。 各分野の専門医が連携し、質の高い医療サービスを提供いたします。</p>
+                    </div>
+                    <div className="space-y-24">
+                        {[
+                            {
+                                id: '01', en: 'Internal Medicine', jp: '一般内科',
+                                icon: <Stethoscope className="w-12 h-12" />,
+                                desc: '風邪やインフルエンザなどの急性疾患から、高血圧、糖尿病、脂質異常症などの生活習慣病まで幅広く対応いたします。患者様一人ひとりのライフスタイルに合わせた無理のない治療計画をご提案します。',
+                                items: ['風邪・発熱外来', '生活習慣病管理', '花粉症・アレルギー', '予防接種']
+                            },
+                            {
+                                id: '02', en: 'Cardiology', jp: '循環器内科',
+                                icon: <Heart className="w-12 h-12" />,
+                                desc: '心臓や血管に関する専門的な診療を行います。動悸、息切れ、胸の痛みなどの症状がある方はご相談ください。心電図や超音波検査など、最新の機器を用いた精密な診断が可能です。',
+                                items: ['高血圧専門外来', '不整脈・心不全', '動脈硬化検査', '心臓リハビリテーション'],
+                                reverse: true
+                            },
+                            {
+                                id: '03', en: 'Aesthetic Dermatology', jp: '美容皮膚科',
+                                icon: <Sparkles className="w-12 h-12" />,
+                                desc: '医療機関だからこそ可能な、効果の高い美容治療を提供します。シミ、シワ、たるみなどのお肌の悩みに対し、医学的根拠に基づいたアプローチで、あなた本来の美しさを引き出します。',
+                                items: ['医療脱毛', 'シミ・くすみ治療', 'ボトックス・ヒアルロン酸', '美肌点滴']
+                            },
+                            {
+                                id: '04', en: 'Medical Check-up', jp: '健康診断・人間ドック',
+                                icon: <Microscope className="w-12 h-12" />,
+                                desc: '病気の早期発見・早期治療のためには、定期的な健康チェックが欠かせません。基本的な健康診断から、がん検診、脳ドックまで、ニーズに合わせた多彩なコースをご用意しています。',
+                                items: ['定期健康診断', '企業健診', '各種がん検診', 'レディースドック'],
+                                reverse: true
+                            }
+                        ].map((service) => (
+                            <div key={service.id} className={`flex flex-col ${service.reverse ? 'md:flex-row-reverse' : 'md:flex-row'} gap-12 items-start`}>
+                                <div className="w-full md:w-1/2 bg-slate-50 p-12 md:p-16 flex flex-col items-center justify-center min-h-[400px]">
+                                    <div className="text-teal-600 mb-6">{service.icon}</div>
+                                    <h4 className="font-en text-3xl font-light mb-2">{service.en}</h4>
+                                    <span className="text-xs tracking-widest text-slate-400 mb-0">{service.jp}</span>
+                                </div>
+                                <div className="w-full md:w-1/2 pt-4">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <span className="font-en text-5xl font-bold text-slate-100">{service.id}</span>
+                                        <div className="h-[1px] flex-grow bg-slate-100"></div>
+                                    </div>
+                                    <h3 className="text-2xl font-medium mb-6">{service.jp}について</h3>
+                                    <p className="text-slate-600 leading-loose mb-8">{service.desc}</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {service.items.map((item, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-sm text-slate-700 border-b border-slate-100 pb-2">
+                                                <div className="w-1 h-1 bg-teal-500 rounded-full"></div>{item}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-8">
+                                        <button onClick={() => navigate('reserve')} className="inline-flex items-center text-sm text-teal-700 font-medium hover:gap-2 transition-all">
+                                            予約する <ArrowRight className="w-4 h-4 ml-1" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+                <section className="bg-slate-900 text-white py-24 text-center">
+                    <div className="container mx-auto px-6">
+                        <h3 className="font-en text-3xl mb-6">Price List</h3>
+                        <p className="text-slate-400 mb-12">主な診療コースの料金表（管理者画面で編集可能）</p>
+                        <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                            {coursesData.map(course => (
+                                <div key={course.id} className="bg-slate-800 p-4 border border-slate-700">
+                                    <div className="flex justify-between items-baseline mb-2">
+                                        <h4 className="text-sm font-bold text-slate-200">{course.title}</h4>
+                                        <span className="font-en text-lg text-teal-400">{course.price}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-400">{course.time}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+                <section className="bg-slate-50 py-24 text-center">
+                    <div className="container mx-auto px-6">
+                        <h3 className="font-en text-3xl mb-6 text-slate-900">Have any questions?</h3>
+                        <p className="text-slate-500 mb-12">診療内容についてご不明な点がございましたら、お気軽にお問い合わせください。</p>
+                        <button onClick={() => navigate('contact')} className="inline-block border border-slate-900 px-12 py-4 text-sm tracking-widest hover:bg-slate-900 hover:text-white transition-colors">CONTACT US</button>
+                    </div>
+                </section>
+            </main>
+        );
+
+        const ReservePage = ({ coursesData, addReservation, navigate }) => {
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({
+                courseId: '',
+                doctor: '指定なし',
+                date: '',
+                time: '',
+                name: '',
+                email: '',
+                phone: '',
+            });
+
+            const handleCourseSelect = (course) => {
+                setFormData({ ...formData, courseId: course.id, courseTitle: course.title, price: course.price });
+                setStep(2);
+            };
+
+            const handleDoctorSelect = (docName) => {
+                setFormData({ ...formData, doctor: docName });
+                setStep(3);
+            };
+
+            const handleDateSubmit = (e) => {
+                e.preventDefault();
+                setStep(4);
+            }
+
+            const handleFinalSubmit = (e) => {
+                e.preventDefault();
+                addReservation({
+                    id: Date.now().toString(),
+                    ...formData,
+                    status: '予約確定',
+                    createdAt: new Date().toLocaleString()
+                });
+                setStep(5);
+            };
+
+            return (
+                <main>
+                    <div className="pt-32 pb-20 container mx-auto px-6 md:px-12 max-w-5xl">
+                        <div className="text-center mb-12 animate-fade-in-up">
+                            <h1 className="font-en text-4xl md:text-5xl font-light mb-4 tracking-wider">RESERVE</h1>
+                            <p className="text-xs text-slate-500 tracking-widest">Web予約</p>
+                        </div>
+                        {step < 5 && (
+                            <div className="mb-12 flex justify-between relative max-w-3xl mx-auto px-4">
+                                <div className="absolute top-1/2 left-0 w-full h-[1px] bg-slate-200 -z-10 transform -translate-y-1/2"></div>
+                                {[{ num: 1, label: 'メニュー' }, { num: 2, label: '医師選択' }, { num: 3, label: '日時選択' }, { num: 4, label: '情報入力' }].map((s) => (
+                                    <div key={s.num} className="flex flex-col items-center bg-white px-2">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold font-en transition-colors duration-300 mb-2 ${step >= s.num ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-400'}`}>{s.num}</div>
+                                        <span className={`text-[10px] tracking-widest hidden md:block ${step >= s.num ? 'text-teal-800' : 'text-slate-400'}`}>{s.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="bg-white md:p-8 min-h-[400px]">
+                            {step === 1 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in-up">
+                                    {coursesData.map((course) => (
+                                        <div key={course.id} onClick={() => handleCourseSelect(course)} className="p-6 border cursor-pointer transition-all duration-300 hover:shadow-md border-slate-200 bg-white hover:border-teal-600 group">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-bold text-slate-800 group-hover:text-teal-800">{course.title}</h3>
+                                                <span className="font-en text-lg">{course.price}</span>
+                                            </div>
+                                            <div className="flex items-center text-xs text-slate-500 mb-4 gap-4"><span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {course.time}</span></div>
+                                            <p className="text-xs text-slate-500 leading-relaxed">{course.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {step === 2 && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in-up">
+                                    {['指定なし', '高橋 健人', '佐藤 美咲', '鈴木 一郎'].map(doc => (
+                                        <button key={doc} onClick={() => handleDoctorSelect(doc)} className="p-8 border border-slate-200 hover:border-teal-600 hover:bg-teal-50 transition-all text-center">
+                                            <p className="font-bold text-lg text-slate-800">{doc}</p>
+                                            <p className="text-xs text-slate-500 mt-2">最短でご案内可能</p>
+                                        </button>
+                                    ))}
+                                    <div className="col-span-1 md:col-span-3 text-center mt-8"><button onClick={() => setStep(1)} className="text-xs text-slate-400 underline">戻る</button></div>
+                                </div>
+                            )}
+                            {step === 3 && (
+                                <form onSubmit={handleDateSubmit} className="max-w-md mx-auto animate-fade-in-up space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">希望日時</label>
+                                        <input type="date" required className="w-full p-3 border border-slate-300" onChange={e => setFormData({...formData, date: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">希望時間</label>
+                                        <select required className="w-full p-3 border border-slate-300" onChange={e => setFormData({...formData, time: e.target.value})}>
+                                            <option value="">選択してください</option>
+                                            <option value="10:00">10:00</option>
+                                            <option value="11:00">11:00</option>
+                                            <option value="12:00">12:00</option>
+                                            <option value="15:00">15:00</option>
+                                            <option value="16:00">16:00</option>
+                                            <option value="17:00">17:00</option>
+                                            <option value="18:00">18:00</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex gap-4 pt-4">
+                                        <button type="button" onClick={() => setStep(2)} className="flex-1 py-3 border border-slate-300 text-slate-600">戻る</button>
+                                        <button type="submit" className="flex-1 py-3 bg-teal-700 text-white hover:bg-teal-800">次へ進む</button>
+                                    </div>
+                                </form>
+                            )}
+                            {step === 4 && (
+                                <form onSubmit={handleFinalSubmit} className="max-w-md mx-auto animate-fade-in-up space-y-6">
+                                    <div className="bg-slate-50 p-4 mb-6 text-sm">
+                                        <p className="font-bold border-b pb-2 mb-2">予約内容確認</p>
+                                        <p>コース: {formData.courseTitle}</p>
+                                        <p>担当医: {formData.doctor}</p>
+                                        <p>日時: {formData.date} {formData.time}</p>
+                                        <p>料金: {formData.price}</p>
+                                    </div>
+                                    <div className="space-y-2"><label className="text-sm font-bold">お名前</label><input required className="w-full p-3 border border-slate-300" placeholder="例: 山田 太郎" onChange={e => setFormData({...formData, name: e.target.value})} /></div>
+                                    <div className="space-y-2"><label className="text-sm font-bold">メールアドレス</label><input type="email" required className="w-full p-3 border border-slate-300" placeholder="example@email.com" onChange={e => setFormData({...formData, email: e.target.value})} /></div>
+                                    <div className="space-y-2"><label className="text-sm font-bold">電話番号</label><input type="tel" required className="w-full p-3 border border-slate-300" placeholder="090-1234-5678" onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
+                                    <div className="flex gap-4 pt-4">
+                                        <button type="button" onClick={() => setStep(3)} className="flex-1 py-3 border border-slate-300 text-slate-600">戻る</button>
+                                        <button type="submit" className="flex-1 py-3 bg-slate-900 text-white hover:bg-teal-800">予約を確定する</button>
+                                    </div>
+                                </form>
+                            )}
+                            {step === 5 && (
+                                <div className="text-center py-12 animate-fade-in-up">
+                                    <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle className="w-8 h-8" /></div>
+                                    <h2 className="text-2xl font-bold mb-4">予約が完了しました</h2>
+                                    <p className="text-slate-500 mb-8">ご登録いただいたメールアドレスへ確認メールをお送りしました。<br/>当日お会いできることを楽しみにしております。</p>
+                                    <button onClick={() => navigate('home')} className="px-8 py-3 bg-slate-900 text-white hover:bg-slate-800">トップページへ戻る</button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </main>
+            );
+        };
+
+        const NewsPage = ({ navigate, newsData }) => (
+            <main>
+                <div className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
+                    <div className="relative z-10 text-center mt-20 md:mt-24">
+                        <h1 className="font-en text-4xl md:text-6xl font-light tracking-widest mb-4">News</h1>
+                        <p className="text-xs md:text-sm tracking-[0.3em] text-slate-300 uppercase">お知らせ一覧</p>
+                    </div>
+                </div>
+                <section className="py-24 container mx-auto px-6 md:px-12 max-w-4xl">
+                    <div className="space-y-8">
+                        {newsData.map((item) => (
+                            <div key={item.id} onClick={() => navigate('news_detail', item.id)} className="group flex flex-col md:flex-row md:items-center gap-4 border-b border-slate-100 pb-8 hover:border-slate-300 transition-colors cursor-pointer">
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto shrink-0">
+                                    <span className="font-en text-sm text-slate-500">{item.date}</span>
+                                    <span className="text-[10px] px-3 py-1 bg-slate-100 text-slate-600 tracking-wider text-center w-fit">{item.tag}</span>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-lg text-slate-800 group-hover:text-teal-800 transition-colors">{item.title}</p>
+                                </div>
+                                <div className="text-slate-300 group-hover:text-teal-600 transition-colors">→</div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-16 text-center">
+                        <button onClick={() => navigate('home')} className="border border-slate-300 px-8 py-3 text-sm hover:bg-slate-50 transition-colors">BACK TO TOP</button>
+                    </div>
+                </section>
+            </main>
+        );
+
+        const NewsDetailPage = ({ newsId, navigate, newsData }) => {
+            const safeNewsData = newsData || [];
+            const article = safeNewsData.find(n => n.id === String(newsId)) || safeNewsData[0];
+
+            if (!article) return <div className="p-12 text-center">記事が見つかりません</div>;
+
+            return (
+                <main>
+                    <div className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
+                        <div className="relative z-10 text-center mt-20 md:mt-24">
+                            <h1 className="font-en text-4xl md:text-6xl font-light tracking-widest mb-4">News</h1>
+                            <p className="text-xs md:text-sm tracking-[0.3em] text-slate-300 uppercase">お知らせ</p>
+                        </div>
+                    </div>
+                    <section className="py-24 container mx-auto px-6 md:px-12">
+                        <div className="max-w-3xl mx-auto">
+                            <div className="mb-12 border-b border-slate-200 pb-12">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <span className="text-[10px] px-3 py-1 bg-slate-900 text-white tracking-wider">{article.tag}</span>
+                                    <span className="font-en text-slate-400 tracking-wider">{article.date}</span>
+                                </div>
+                                <h1 className="text-2xl md:text-4xl font-medium leading-relaxed">{article.title}</h1>
+                            </div>
+                            <div className="prose prose-slate prose-lg max-w-none mb-16 prose-headings:font-normal prose-img:rounded-none" dangerouslySetInnerHTML={{ __html: article.content }} />
+                            <div className="text-center border-t border-slate-200 pt-12">
+                                <button onClick={() => navigate('news')} className="inline-flex items-center justify-center gap-2 px-8 py-6 border border-slate-300 hover:bg-slate-50 text-sm tracking-widest transition-colors"><ArrowLeft className="w-4 h-4" /> BACK TO LIST</button>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            );
+        };
+
+        // --- New Pages (Added to Fix Reference Errors) ---
+
+        const ContactPage = () => (
+            <main>
+                <div className="relative w-full h-[40vh] bg-slate-900 flex items-center justify-center">
+                    <div className="text-center text-white z-10">
+                        <h1 className="font-en text-4xl tracking-widest mb-4">Contact</h1>
+                        <p className="text-xs tracking-[0.3em] uppercase opacity-70">お問い合わせ</p>
+                    </div>
+                </div>
+                <section className="py-24 container mx-auto px-6 max-w-2xl">
+                    <p className="mb-12 text-center text-slate-600 leading-loose">診療内容についてのご質問や、当院へのご意見などがございましたら、<br/>下記フォームよりお気軽にお問い合わせください。</p>
+                    <form className="space-y-8">
+                        <div>
+                            <label className="block text-sm font-bold mb-2">お名前</label>
+                            <input type="text" className="w-full p-4 border border-slate-200 focus:border-teal-600 outline-none transition-colors" placeholder="山田 太郎" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold mb-2">メールアドレス</label>
+                            <input type="email" className="w-full p-4 border border-slate-200 focus:border-teal-600 outline-none transition-colors" placeholder="example@email.com" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold mb-2">お問い合わせ内容</label>
+                            <textarea className="w-full p-4 border border-slate-200 focus:border-teal-600 outline-none transition-colors h-48" placeholder="お問い合わせ内容をご記入ください"></textarea>
+                        </div>
+                        <button type="submit" className="w-full bg-slate-900 text-white py-4 hover:bg-teal-800 transition-colors">送信する</button>
+                    </form>
+                </section>
+            </main>
+        );
+
+        const RecruitPage = () => (
+            <main>
+                <div className="relative w-full h-[40vh] bg-slate-900 flex items-center justify-center">
+                    <div className="text-center text-white z-10">
+                        <h1 className="font-en text-4xl tracking-widest mb-4">Recruit</h1>
+                        <p className="text-xs tracking-[0.3em] uppercase opacity-70">採用情報</p>
+                    </div>
+                </div>
+                <section className="py-24 container mx-auto px-6 max-w-3xl text-center">
+                    <h2 className="text-2xl font-light mb-8">私たちと一緒に働きませんか？</h2>
+                    <p className="leading-loose text-slate-600 mb-12">LUMINA CLINICでは、現在看護師および医療事務スタッフを募集しています。<br/>患者様一人ひとりに寄り添った医療を提供したいという想いをお持ちの方をお待ちしております。</p>
+                    <div className="bg-slate-50 p-8 text-left space-y-6 mb-12">
+                        <div className="border-b border-slate-200 pb-4">
+                            <h3 className="font-bold mb-2">看護師（正社員/パート）</h3>
+                            <p className="text-sm text-slate-600">業務内容：診療補助、採血、点滴、美容施術など</p>
+                        </div>
+                        <div>
+                            <h3 className="font-bold mb-2">医療事務（正社員）</h3>
+                            <p className="text-sm text-slate-600">業務内容：受付、会計、レセプト業務、電話対応など</p>
+                        </div>
+                    </div>
+                    <p className="text-sm text-slate-500">応募方法などの詳細は、お問い合わせフォームよりご連絡ください。</p>
+                </section>
+            </main>
+        );
+
+        const PrivacyPage = () => (
+            <main>
+                <div className="relative w-full h-[40vh] bg-slate-900 flex items-center justify-center">
+                    <div className="text-center text-white z-10">
+                        <h1 className="font-en text-4xl tracking-widest mb-4">Privacy Policy</h1>
+                        <p className="text-xs tracking-[0.3em] uppercase opacity-70">プライバシーポリシー</p>
+                    </div>
+                </div>
+                <section className="py-24 container mx-auto px-6 max-w-3xl">
+                    <div className="prose prose-slate max-w-none">
+                        <h3>個人情報の取り扱いについて</h3>
+                        <p>LUMINA CLINIC（以下「当院」）は、以下のとおり個人情報保護方針を定め、個人情報保護の仕組みを構築し、全従業員に個人情報保護の重要性の認識と取組みを徹底させることにより、個人情報の保護を推進致します。</p>
+                        <h4>個人情報の管理</h4>
+                        <p>当院は、お客さまの個人情報を正確かつ最新の状態に保ち、個人情報への不正アクセス・紛失・破損・改ざん・漏洩などを防止するため、セキュリティシステムの維持・管理体制の整備・社員教育の徹底等の必要な措置を講じ、安全対策を実施し個人情報の厳重な管理を行ないます。</p>
+                        <h4>個人情報の利用目的</h4>
+                        <p>お客さまからお預かりした個人情報は、当院からのご連絡や業務のご案内やご質問に対する回答として、電子メールや資料のご送付に利用いたします。</p>
+                    </div>
+                </section>
+            </main>
+        );
+
+        // --- Admin Dashboard Components ---
+        const AdminDashboard = ({ navigate, newsData, setNewsData, reservations, setReservations, coursesData, setCoursesData }) => {
+            const [activeTab, setActiveTab] = useState('reservations');
+            const [newNews, setNewNews] = useState({ title: '', date: '', tag: 'NEWS', content: '' });
+            const [memo, setMemo] = useLocalStorage('admin_memo', '');
+
+            const handleDeleteReservation = (id) => {
+                if(confirm('この予約を削除してもよろしいですか？')) {
+                    setReservations(reservations.filter(r => r.id !== id));
+                }
+            };
+
+            const handleStatusChange = (id, status) => {
+                setReservations(reservations.map(r => r.id === id ? { ...r, status } : r));
+            };
+
+            const handleAddNews = (e) => {
+                e.preventDefault();
+                const id = 'news_' + Date.now();
+                setNewsData([{ id, ...newNews }, ...newsData]);
+                setNewNews({ title: '', date: '', tag: 'NEWS', content: '' });
+                alert('ニュースを追加しました');
+            };
+
+            const handleDeleteNews = (id) => {
+                if(confirm('削除しますか？')) setNewsData(newsData.filter(n => n.id !== id));
+            };
+
+            const handleCourseUpdate = (id, field, value) => {
+                setCoursesData(coursesData.map(c => c.id === id ? { ...c, [field]: value } : c));
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
+                    <aside className="bg-slate-900 text-white w-full md:w-64 flex-shrink-0">
+                        <div className="p-6 border-b border-slate-800">
+                            <h2 className="font-en text-xl tracking-widest">LUMINA ADMIN</h2>
+                        </div>
+                        <nav className="p-4 space-y-2">
+                            {[
+                                { id: 'reservations', label: '予約管理', icon: <Calendar className="w-4 h-4" /> },
+                                { id: 'news', label: 'ニュース管理', icon: <Edit className="w-4 h-4" /> },
+                                { id: 'courses', label: 'コース価格設定', icon: <Stethoscope className="w-4 h-4" /> },
+                                { id: 'schedule', label: 'スケジュールメモ', icon: <Clock className="w-4 h-4" /> },
+                            ].map(tab => (
+                                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${activeTab === tab.id ? 'bg-teal-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                                    {tab.icon} {tab.label}
+                                </button>
+                            ))}
+                            <button onClick={() => navigate('home')} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-400 hover:bg-red-900/30 hover:text-red-400 mt-8 border-t border-slate-800">
+                                <ArrowLeft className="w-4 h-4" /> ログアウト
+                            </button>
+                        </nav>
+                    </aside>
+                    <main className="flex-1 p-6 md:p-12 overflow-y-auto h-screen">
+                        <h1 className="text-2xl font-bold mb-8 text-slate-800 border-b pb-4">
+                            {activeTab === 'reservations' && '予約管理'}
+                            {activeTab === 'news' && 'ニュース管理'}
+                            {activeTab === 'courses' && 'コース・価格設定'}
+                            {activeTab === 'schedule' && 'スケジュールメモ'}
+                        </h1>
+
+                        {activeTab === 'reservations' && (
+                            <div className="bg-white rounded shadow overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-50 text-slate-600 font-medium border-b">
+                                        <tr>
+                                            <th className="p-4">日時</th>
+                                            <th className="p-4">ステータス</th>
+                                            <th className="p-4">氏名</th>
+                                            <th className="p-4">コース/医師</th>
+                                            <th className="p-4">連絡先</th>
+                                            <th className="p-4">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reservations.length === 0 ? <tr><td colSpan="6" className="p-8 text-center text-slate-400">予約はありません</td></tr> : reservations.map(r => (
+                                            <tr key={r.id} className="border-b hover:bg-slate-50">
+                                                <td className="p-4">{r.date}<br/><span className="text-slate-500">{r.time}</span></td>
+                                                <td className="p-4">
+                                                    <select value={r.status} onChange={(e) => handleStatusChange(r.id, e.target.value)} className={`border rounded p-1 text-xs ${r.status === '完了' ? 'bg-gray-100' : 'bg-teal-50 text-teal-800'}`}>
+                                                        <option>予約確定</option>
+                                                        <option>来院済み</option>
+                                                        <option>キャンセル</option>
+                                                        <option>完了</option>
+                                                    </select>
+                                                </td>
+                                                <td className="p-4 font-medium">{r.name}</td>
+                                                <td className="p-4">{r.courseTitle}<br/><span className="text-xs text-slate-500">{r.doctor}</span></td>
+                                                <td className="p-4 text-xs">{r.phone}<br/>{r.email}</td>
+                                                <td className="p-4"><button onClick={() => handleDeleteReservation(r.id)} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {activeTab === 'news' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div className="bg-white p-6 rounded shadow">
+                                    <h3 className="font-bold mb-4">新規ニュース投稿</h3>
+                                    <form onSubmit={handleAddNews} className="space-y-4">
+                                        <div><label className="block text-xs font-bold mb-1">日付</label><input type="text" placeholder="YYYY.MM.DD" required className="w-full border p-2 text-sm" value={newNews.date} onChange={e=>setNewNews({...newNews, date: e.target.value})} /></div>
+                                        <div><label className="block text-xs font-bold mb-1">タグ</label><select className="w-full border p-2 text-sm" value={newNews.tag} onChange={e=>setNewNews({...newNews, tag: e.target.value})}><option>NEWS</option><option>INFO</option><option>RECRUIT</option></select></div>
+                                        <div><label className="block text-xs font-bold mb-1">タイトル</label><input type="text" required className="w-full border p-2 text-sm" value={newNews.title} onChange={e=>setNewNews({...newNews, title: e.target.value})} /></div>
+                                        <div><label className="block text-xs font-bold mb-1">本文(HTML可)</label><textarea required className="w-full border p-2 text-sm h-32" value={newNews.content} onChange={e=>setNewNews({...newNews, content: e.target.value})}></textarea></div>
+                                        <button type="submit" className="w-full bg-teal-700 text-white py-2 text-sm hover:bg-teal-800">投稿する</button>
+                                    </form>
+                                </div>
+                                <div className="bg-white p-6 rounded shadow max-h-[600px] overflow-y-auto">
+                                    <h3 className="font-bold mb-4">投稿済み一覧</h3>
+                                    <div className="space-y-4">
+                                        {newsData.map(n => (
+                                            <div key={n.id} className="border-b pb-4 flex justify-between items-start">
+                                                <div>
+                                                    <p className="text-xs text-slate-500">{n.date} <span className="bg-slate-100 px-1">{n.tag}</span></p>
+                                                    <p className="font-medium text-sm mt-1">{n.title}</p>
+                                                </div>
+                                                <button onClick={() => handleDeleteNews(n.id)} className="text-slate-400 hover:text-red-500 text-xs">削除</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'courses' && (
+                            <div className="bg-white p-6 rounded shadow">
+                                <p className="text-sm text-slate-500 mb-6">Webサイト上の表記と予約フォームの選択肢に即座に反映されます。</p>
+                                <div className="space-y-4">
+                                    {coursesData.map(c => (
+                                        <div key={c.id} className="flex flex-col md:flex-row gap-4 border-b pb-4 items-end">
+                                            <div className="flex-1 w-full">
+                                                <label className="text-xs font-bold text-slate-500">コース名</label>
+                                                <input type="text" className="w-full border p-2 text-sm" value={c.title} onChange={e => handleCourseUpdate(c.id, 'title', e.target.value)} />
+                                            </div>
+                                            <div className="w-full md:w-32">
+                                                <label className="text-xs font-bold text-slate-500">時間</label>
+                                                <input type="text" className="w-full border p-2 text-sm" value={c.time} onChange={e => handleCourseUpdate(c.id, 'time', e.target.value)} />
+                                            </div>
+                                            <div className="w-full md:w-40">
+                                                <label className="text-xs font-bold text-slate-500">価格</label>
+                                                <input type="text" className="w-full border p-2 text-sm font-en" value={c.price} onChange={e => handleCourseUpdate(c.id, 'price', e.target.value)} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'schedule' && (
+                            <div className="bg-white p-6 rounded shadow h-full flex flex-col">
+                                <p className="text-sm text-slate-500 mb-2">スタッフ共有用のメモとしてご利用ください。</p>
+                                <textarea 
+                                    className="w-full flex-1 border p-4 text-sm leading-relaxed focus:outline-teal-600 resize-none" 
+                                    placeholder="ここにスケジュールや連絡事項を入力..."
+                                    value={memo}
+                                    onChange={(e) => setMemo(e.target.value)}
+                                ></textarea>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        };
+
+        const AdminLoginPage = ({ onLogin, navigate }) => {
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (password === 'test1234') { onLogin(); } else { setError('パスワードが違います'); }
+            };
+            return (
+                <div className="flex-1 flex items-center justify-center p-6 pt-32 min-h-screen bg-slate-50">
+                    <div className="bg-white p-8 rounded shadow-sm max-w-md w-full border border-slate-200 text-center">
+                        <div className="flex justify-center mb-6 text-teal-700"><Lock className="w-12 h-12" /></div>
+                        <h2 className="font-en text-2xl mb-2 tracking-widest">ADMIN LOGIN</h2>
+                        <form className="space-y-4 mt-8" onSubmit={handleLogin}>
+                            <input className="flex h-9 w-full border px-3 py-1 text-base text-center tracking-widest bg-white border-slate-200 rounded-md focus:outline-none focus:border-teal-700" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                            {error && <p className="text-red-500 text-xs tracking-wider animate-pulse">{error}</p>}
+                            <button className="flex items-center justify-center w-full h-9 bg-slate-900 hover:bg-slate-800 text-white tracking-widest rounded-md transition-colors" type="submit">LOGIN</button>
+                        </form>
+                        <button onClick={() => navigate('home')} className="mt-4 text-xs text-slate-400 hover:underline">Back to Home</button>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Main App ---
+        function App() {
+            const [currentPage, setCurrentPage] = useState('home');
+            const [detailId, setDetailId] = useState(null);
+            const [isScrolled, setIsScrolled] = useState(false);
+            const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+            // Data States with Persistence
+            const [newsData, setNewsData] = useLocalStorage('lumina_news', [
+                { id: '1', date: '2025.11.29', tag: 'NEWS', title: 'これはテストのニュース', content: '<p>管理者画面からこのニュースを編集・削除できます。</p>' },
+                { id: '2', date: '2025.04.01', tag: 'NEWS', title: 'グランドオープンのお知らせ', content: '<p>平素より格別のご愛顧を賜り...</p>' },
+                { id: '3', date: '2025.03.15', tag: 'INFO', title: '内覧会のご案内（3/28, 29）', content: '<p>日時：2025年3月28日...</p>' },
+                { id: '4', date: '2025.03.01', tag: 'RECRUIT', title: 'オープニングスタッフ募集について', content: '<p>詳細はこちら...</p>' },
+            ]);
+            
+            const [coursesData, setCoursesData] = useLocalStorage('lumina_courses', [
+                { id: 'c1', title: '初回カウンセリング', price: '¥3,000', time: '30 min', desc: '初めての方はこちら。お肌の悩みを伺います。' },
+                { id: 'c2', title: '美容皮膚科診療', price: '¥5,000', time: '60 min', desc: 'レーザー治療やピーリングなどの施術を行います。' },
+                { id: 'c3', title: '美容点滴・注射', price: '¥2,000', time: '15 min', desc: 'ビタミン点滴やプラセンタ注射など。' },
+                { id: 'c4', title: '一般内科診療', price: '¥1,500', time: '15 min', desc: '風邪症状や生活習慣病の相談など。' },
+                { id: 'c5', title: 'プレミアムコース', price: '¥25,000', time: '120 min', desc: '全身のトータルケアを行う特別コース。' }
+            ]);
+
+            const [reservations, setReservations] = useLocalStorage('lumina_reservations', []);
+
+            useEffect(() => {
+                const handleScroll = () => setIsScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            useEffect(() => window.scrollTo(0, 0), [currentPage]);
+
+            const navigate = (page, id = null) => {
+                setCurrentPage(page);
+                if (id) setDetailId(id);
+            };
+
+            const addReservation = (data) => {
+                setReservations([data, ...reservations]);
+            };
+
+            return (
+                <div className="min-h-screen bg-white text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900 cursor-none">
+                    <style>{`
+                    body { font-family: 'Noto Sans JP', sans-serif; cursor: none; }
+                    .font-en { font-family: 'Cormorant Garamond', serif; }
+                    a, button, input, textarea, select { cursor: none; }
+                    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+                    .animate-fade-in-left { animation: fadeInLeft 0.8s ease-out forwards; opacity: 0; transform: translateX(-20px); }
+                    .animate-fade-in-right { animation: fadeInRight 0.8s ease-out forwards; opacity: 0; transform: translateX(20px); }
+                    .animate-marquee { animation: marquee 30s linear infinite; }
+                    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+                    @keyframes fadeInLeft { to { opacity: 1; transform: translateX(0); } }
+                    @keyframes fadeInRight { to { opacity: 1; transform: translateX(0); } }
+                    @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+                    `}</style>
+
+                    <MouseStalker />
+                    {currentPage !== 'admin' && <Header currentPage={currentPage} navigate={navigate} isScrolled={isScrolled} />}
+                    
+                    {currentPage === 'home' && <HomePage navigate={navigate} newsData={newsData} />}
+                    {currentPage === 'doctors' && <DoctorsPage />}
+                    {currentPage === 'services' && <ServicesPage navigate={navigate} coursesData={coursesData} />}
+                    {currentPage === 'access' && <AccessPage />}
+                    {currentPage === 'contact' && <ContactPage />}
+                    {currentPage === 'recruit' && <RecruitPage />}
+                    {currentPage === 'privacy' && <PrivacyPage />}
+                    {currentPage === 'news' && <NewsPage navigate={navigate} newsData={newsData} />}
+                    {currentPage === 'reserve' && <ReservePage navigate={navigate} coursesData={coursesData} addReservation={addReservation} />}
+                    {currentPage === 'news_detail' && <NewsDetailPage newsId={detailId} navigate={navigate} newsData={newsData} />}
+                    
+                    {currentPage === 'admin' && (
+                        isAdminLoggedIn ? (
+                            <AdminDashboard 
+                                navigate={navigate} 
+                                newsData={newsData} setNewsData={setNewsData} 
+                                reservations={reservations} setReservations={setReservations}
+                                coursesData={coursesData} setCoursesData={setCoursesData}
+                            />
+                        ) : (
+                            <AdminLoginPage onLogin={() => setIsAdminLoggedIn(true)} navigate={navigate} />
+                        )
+                    )}
+
+                    {currentPage !== 'admin' && <Footer navigate={navigate} />}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
