@@ -12,7 +12,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@200;300;400;500;700&display=swap');
     </style>
 </head>
-<body class="bg-white text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900 cursor-none">
+<body class="bg-white text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900 cursor-auto md:cursor-none">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -51,7 +51,7 @@
         const Clock = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></IconBase>;
         const Stethoscope = (props) => <IconBase {...props}><path d="M11 2v2" /><path d="M5 2v2" /><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" /><path d="M8 15a6 6 0 0 0 12 0v-3" /><circle cx="20" cy="10" r="2" /></IconBase>;
         const Heart = (props) => <IconBase {...props}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></IconBase>;
-        const Sparkles = (props) => <IconBase {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></IconBase>;
+        const Sparkles = (props) => <IconBase {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z" /></IconBase>;
         const Microscope = (props) => <IconBase {...props}><path d="M6 18h8" /><path d="M3 22h18" /><path d="M14 22a7 7 0 1 0 0-14h-1" /><path d="M9 14h2" /><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z" /><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3" /></IconBase>;
         const Menu = (props) => <IconBase {...props}><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></IconBase>;
         const XIcon = (props) => <IconBase {...props}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></IconBase>;
@@ -66,11 +66,15 @@
         const User = (props) => <IconBase {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></IconBase>;
         const Shield = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></IconBase>;
 
-        // --- Mouse Stalker ---
+        // --- Mouse Stalker (Optimized for Mobile & Inversion) ---
         const MouseStalker = () => {
             const cursorRef = useRef(null);
             const followerRef = useRef(null);
             useEffect(() => {
+                // Check if device is touch or small screen
+                const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                if (isTouchDevice && window.innerWidth < 768) return;
+
                 const moveCursor = (e) => {
                     const { clientX, clientY } = e;
                     if (cursorRef.current) cursorRef.current.style.transform = `translate3d(${clientX}px, ${clientY}px, 0)`;
@@ -79,10 +83,13 @@
                 window.addEventListener('mousemove', moveCursor);
                 return () => window.removeEventListener('mousemove', moveCursor);
             }, []);
+            
+            // "hidden md:block" hides the custom cursor on mobile screens
+            // bg-white with mix-blend-difference ensures correct inversion (Black on White, White on Black)
             return (
                 <React.Fragment>
-                    <div ref={cursorRef} className="fixed top-0 left-0 w-3 h-3 bg-teal-500 rounded-full pointer-events-none z-[9999] mix-blend-difference -translate-x-1/2 -translate-y-1/2 will-change-transform" style={{ marginTop: '-6px', marginLeft: '-6px' }} />
-                    <div ref={followerRef} className="fixed top-0 left-0 w-12 h-12 border border-teal-500 rounded-full pointer-events-none z-[9999] mix-blend-difference transition-transform duration-300 ease-out will-change-transform" style={{ marginTop: '-24px', marginLeft: '-24px' }} />
+                    <div ref={cursorRef} className="hidden md:block fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference -translate-x-1/2 -translate-y-1/2 will-change-transform" style={{ marginTop: '-6px', marginLeft: '-6px' }} />
+                    <div ref={followerRef} className="hidden md:block fixed top-0 left-0 w-12 h-12 border border-white rounded-full pointer-events-none z-[9999] mix-blend-difference transition-transform duration-300 ease-out will-change-transform" style={{ marginTop: '-24px', marginLeft: '-24px' }} />
                 </React.Fragment>
             );
         };
@@ -1166,11 +1173,16 @@
             };
 
             return (
-                <div className="min-h-screen bg-white text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900 cursor-none">
+                <div className="min-h-screen bg-white text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900 cursor-auto md:cursor-none">
                     <style>{`
-                    body { font-family: 'Noto Sans JP', sans-serif; cursor: none; }
+                    body { font-family: 'Noto Sans JP', sans-serif; }
                     .font-en { font-family: 'Cormorant Garamond', serif; }
-                    a, button, input, textarea, select { cursor: none; }
+                    
+                    /* Custom Cursor Logic */
+                    @media (min-width: 768px) {
+                        body, a, button, input, textarea, select { cursor: none; }
+                    }
+
                     .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
                     .animate-fade-in-left { animation: fadeInLeft 0.8s ease-out forwards; opacity: 0; transform: translateX(-20px); }
                     .animate-fade-in-right { animation: fadeInRight 0.8s ease-out forwards; opacity: 0; transform: translateX(20px); }
