@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LUMINA CLINIC TOKYO | 美とWellnessの調和</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@200;300;400;500;700&display=swap');
     </style>
@@ -299,7 +303,7 @@
                             </div>
                             <div className="hidden md:flex gap-12 items-center">
                                 <div className="flex flex-col items-end">
-                                    <span className="font-en text-slate-400 text-[10px] tracking-widest">CURRENT STATUS</span>
+                                    <span className="font-en text-slate400 text-[10px] tracking-widest">CURRENT STATUS</span>
                                     <span className="font-en text-xs tracking-widest text-teal-700 flex items-center gap-2">
                                         <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>OPEN TODAY 10:00 - 19:00
                                     </span>
@@ -377,7 +381,6 @@
                                             style={{ maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)' }}
                                         />
                                     </div>
-                                    <div className="absolute -top-10 -right-10 w-64 h-64 border border-slate-700 z-0 hidden md:block"></div>
                                 </div>
                             </div>
                             <div className="mt-20 text-center">
@@ -449,58 +452,6 @@
             );
         };
 
-        const AccessPage = ({ setStalkerVisible }) => (
-            <main>
-                <div className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
-                    <div className="absolute inset-0 z-0">
-                        <img alt="Access" className="w-full h-full object-cover opacity-40" src="https://images.unsplash.com/photo-1583752582921-23c7d75c75e0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" />
-                    </div>
-                    <div className="relative z-10 text-center mt-20 md:mt-24">
-                        <h1 className="font-en text-4xl md:text-6xl font-light tracking-widest mb-4 animate-fade-in-up">Access</h1>
-                        <p className="text-xs md:text-sm tracking-[0.3em] text-slate-300 uppercase animate-fade-in-up delay-100">アクセス</p>
-                    </div>
-                </div>
-                <section className="py-24 container mx-auto px-6 md:px-12">
-                    <div className="flex flex-col lg:flex-row gap-16">
-                        <div className="lg:w-1/2 space-y-12">
-                            <div>
-                                <h3 className="font-en text-2xl tracking-widest mb-8 border-b border-slate-200 pb-4">LOCATION</h3>
-                                <div className="flex items-start gap-6">
-                                    <MapPin className="w-8 h-8 text-slate-900 shrink-0 mt-1" />
-                                    <div>
-                                        <p className="font-en text-lg mb-2 font-medium">LUMINA CLINIC TOKYO</p>
-                                        <p className="font-medium text-xl mb-2">〒107-0062</p>
-                                        <p className="text-slate-600 text-lg leading-relaxed">東京都港区南青山 5-1-1<br />LUMINAビル 3F</p>
-                                        <div className="mt-6 p-4 bg-slate-50 text-sm text-slate-600 leading-loose">
-                                            <span className="font-bold text-teal-700">東京メトロ「表参道駅」B1出口より徒歩2分</span><br />B1出口を出て青山通りを渋谷方面へ直進。 最初の交差点を左折し、50mほど進んだ左手の白いビルの3階です。
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="font-en text-2xl tracking-widest mb-8 border-b border-slate-200 pb-4">CONTACT</h3>
-                                <div className="flex items-center gap-6 mb-6">
-                                    <Phone className="w-8 h-8 text-slate-900 shrink-0" />
-                                    <div><p className="text-xs text-slate-400 mb-1">お電話でのご予約・お問い合わせ</p><p className="font-en text-4xl text-slate-900 tracking-wider">03-1234-5678</p></div>
-                                </div>
-                                <div className="flex items-center gap-6">
-                                    <Mail className="w-8 h-8 text-slate-900 shrink-0" />
-                                    <div><p className="text-xs text-slate-400 mb-1">メールでのお問い合わせ</p><p className="font-en text-lg text-slate-900 underline">info@lumina-clinic.jp</p></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div 
-                            className="lg:w-1/2 h-[500px] lg:h-auto bg-slate-100 relative grayscale hover:grayscale-0 transition-all duration-500 ease-in-out cursor-auto group"
-                            onMouseEnter={() => setStalkerVisible(false)}
-                            onMouseLeave={() => setStalkerVisible(true)}
-                        >
-                            <iframe height="100%" loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.7479754683745!2d139.7103883!3d35.6650584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188c9814f4a8a9%3A0x1e1d0f283a133f0!2sOmotesando%20Station!5e0!3m2!1sen!2sjp!4v1625000000000!5m2!1sen!2sjp" style={{ border: 0 }} title="Clinic Location" width="100%"></iframe>
-                        </div>
-                    </div>
-                </section>
-            </main>
-        );
-
         const DoctorsPage = ({ navigate }) => (
             <main>
                 <div className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
@@ -552,8 +503,8 @@
                         <h3 className="font-en text-2xl mb-12 text-center tracking-widest">SPECIALISTS</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {[
-                                { name: '佐藤 美咲', en: 'Misaki Sato', role: '美容皮膚科医 / 日本皮膚科学会専門医', desc: '女性ならではの視点で、繊細な肌の悩みに寄り添います。自然な美しさを引き出す治療が得意です。', img: 'https://i.imgur.com/FvHW6O5.png' },
-                                { name: '鈴木 一郎', en: 'Ichiro Suzuki', role: '麻酔科医 / 救急科専門医', desc: '痛みの少ない治療と、安全な全身管理を徹底しています。リラックスして施術を受けていただけます。', img: 'https://i.imgur.com/kslMM7C.png' },
+                                { name: '佐藤 美咲', en: 'Misaki Sato', role: '美容皮膚科医 / 日本皮膚科学会専門医', desc: '女性ならではの視点で、繊細な肌の悩みに寄り添います。自然な美しさを引き出す治療が得意です。', img: 'https://i.imgur.com/kslMM7C.png' },
+                                { name: '鈴木 一郎', en: 'Ichiro Suzuki', role: '麻酔科医 / 救急科専門医', desc: '痛みの少ない治療と、安全な全身管理を徹底しています。リラックスして施術を受けていただけます。', img: 'https://i.imgur.com/FvHW6O5.png' },
                                 { name: 'Nurses & Staff', en: 'LUMINA Team', role: '医療スタッフ', desc: 'ホスピタリティ溢れるスタッフが、皆様の快適なご滞在をサポートいたします。', img: 'https://i.imgur.com/ajvUub1.png' }
                             ].map((staff, idx) => (
                                 <div key={idx} className="group">
@@ -1160,7 +1111,12 @@
             const [stalkerVisible, setStalkerVisible] = useState(true);
 
             // Data States with Persistence
-            const [newsData, setNewsData] = useLocalStorage('lumina_news_v2', []);
+            // CHANGED: key name to 'lumina_news_v3' to reset previous data, default value to dummy data
+            const [newsData, setNewsData] = useLocalStorage('lumina_news_v3', [
+                { id: '1', date: '2025.05.01', tag: 'NEWS', title: 'LUMINA CLINIC TOKYO グランドオープンのお知らせ', content: '<p>この度、南青山にLUMINA CLINIC TOKYOをグランドオープンいたしました。「美とWellnessの調和」をテーマに、皆様の健康と美をサポートしてまいります。</p>' },
+                { id: '2', date: '2025.04.15', tag: 'INFO', title: '内覧会開催のご案内（4/28, 29）', content: '<p>開院に先立ちまして、内覧会を開催いたします。どなたでもご自由にご見学いただけますので、ぜひお立ち寄りください。<br>日時：2025年4月28日（月）、29日（火） 10:00〜16:00</p>' },
+                { id: '3', date: '2025.04.01', tag: 'RECRUIT', title: 'オープニングスタッフ募集について', content: '<p>LUMINA CLINIC TOKYOでは、オープニングスタッフ（看護師・医療事務）を募集しております。詳細はお問い合わせフォームよりご連絡ください。</p>' },
+            ]);
             
             const [coursesData, setCoursesData] = useLocalStorage('lumina_courses', [
                 { id: 'c1', title: '初回カウンセリング', price: '¥3,000', time: '30 min', desc: '初めての方はこちら。お肌の悩みを伺います。' },
