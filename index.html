@@ -66,12 +66,11 @@
         const User = (props) => <IconBase {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></IconBase>;
         const Shield = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></IconBase>;
 
-        // --- Mouse Stalker (Optimized for Mobile & Inversion) ---
-        const MouseStalker = () => {
+        // --- Mouse Stalker (Optimized for Mobile, Inversion & Map) ---
+        const MouseStalker = ({ visible }) => {
             const cursorRef = useRef(null);
             const followerRef = useRef(null);
             useEffect(() => {
-                // Check if device is touch or small screen
                 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
                 if (isTouchDevice && window.innerWidth < 768) return;
 
@@ -84,12 +83,11 @@
                 return () => window.removeEventListener('mousemove', moveCursor);
             }, []);
             
-            // "hidden md:block" hides the custom cursor on mobile screens
-            // bg-white with mix-blend-difference ensures correct inversion (Black on White, White on Black)
+            // "visible" prop controls opacity to hide/show stalker over maps
             return (
                 <React.Fragment>
-                    <div ref={cursorRef} className="hidden md:block fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference -translate-x-1/2 -translate-y-1/2 will-change-transform" style={{ marginTop: '-6px', marginLeft: '-6px' }} />
-                    <div ref={followerRef} className="hidden md:block fixed top-0 left-0 w-12 h-12 border border-white rounded-full pointer-events-none z-[9999] mix-blend-difference transition-transform duration-300 ease-out will-change-transform" style={{ marginTop: '-24px', marginLeft: '-24px' }} />
+                    <div ref={cursorRef} className={`hidden md:block fixed top-0 left-0 w-3 h-3 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference -translate-x-1/2 -translate-y-1/2 will-change-transform transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ marginTop: '-6px', marginLeft: '-6px' }} />
+                    <div ref={followerRef} className={`hidden md:block fixed top-0 left-0 w-12 h-12 border border-white rounded-full pointer-events-none z-[9999] mix-blend-difference transition-transform duration-300 ease-out will-change-transform transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ marginTop: '-24px', marginLeft: '-24px' }} />
                 </React.Fragment>
             );
         };
@@ -223,7 +221,7 @@
         );
 
         // --- Pages ---
-        const HomePage = ({ navigate, newsData }) => {
+        const HomePage = ({ navigate, newsData, setStalkerVisible }) => {
             const heroImages = [
                 "https://images.unsplash.com/photo-1570105954248-fa0c1376edfe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920",
                 "https://images.unsplash.com/photo-1583752582921-23c7d75c75e0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920",
@@ -433,7 +431,11 @@
                                         <p className="text-[10px] text-slate-400 mt-2 text-right">▲: 15:00 - 17:00 / 休診日: 木曜・日曜・祝日</p>
                                     </div>
                                 </div>
-                                <div className="lg:w-2/3 h-[400px] bg-slate-200 grayscale hover:grayscale-0 transition-all duration-500 ease-in-out relative">
+                                <div 
+                                    className="lg:w-2/3 h-[400px] bg-slate-200 grayscale hover:grayscale-0 transition-all duration-500 ease-in-out relative group cursor-auto"
+                                    onMouseEnter={() => setStalkerVisible(false)}
+                                    onMouseLeave={() => setStalkerVisible(true)}
+                                >
                                     <iframe height="100%" loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.7479754683745!2d139.7103883!3d35.6650584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188c9814f4a8a9%3A0x1e1d0f283a133f0!2sOmotesando%20Station!5e0!3m2!1sen!2sjp!4v1625000000000!5m2!1sen!2sjp" style={{ border: 0 }} title="Clinic Location" width="100%"></iframe>
                                 </div>
                             </div>
@@ -443,7 +445,7 @@
             );
         };
 
-        const AccessPage = () => (
+        const AccessPage = ({ setStalkerVisible }) => (
             <main>
                 <div className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
                     <div className="absolute inset-0 z-0">
@@ -483,8 +485,12 @@
                                 </div>
                             </div>
                         </div>
-                        <div className="lg:w-1/2 h-[500px] lg:h-auto bg-slate-100 relative grayscale hover:grayscale-0 transition-all duration-500 ease-in-out">
-                            <iframe height="100%" loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.7479754683745!2d139.7103883!3d35.6650584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188c9814f4a8a9%3A0x1e1d0f283a133f0!2sOmotesando%20Station!5e0!3m2!1sen!2sjp!4v1625000000000!5m2!1sen!2sjp" style={{ border: 0, filter: 'grayscale(100%)' }} title="Clinic Location" width="100%"></iframe>
+                        <div 
+                            className="lg:w-1/2 h-[500px] lg:h-auto bg-slate-100 relative grayscale hover:grayscale-0 transition-all duration-500 ease-in-out cursor-auto group"
+                            onMouseEnter={() => setStalkerVisible(false)}
+                            onMouseLeave={() => setStalkerVisible(true)}
+                        >
+                            <iframe height="100%" loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.7479754683745!2d139.7103883!3d35.6650584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188c9814f4a8a9%3A0x1e1d0f283a133f0!2sOmotesando%20Station!5e0!3m2!1sen!2sjp!4v1625000000000!5m2!1sen!2sjp" style={{ border: 0 }} title="Clinic Location" width="100%"></iframe>
                         </div>
                     </div>
                 </section>
@@ -1136,6 +1142,8 @@
             const [detailId, setDetailId] = useState(null);
             const [isScrolled, setIsScrolled] = useState(false);
             const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+            // New state to control stalker visibility over iframes
+            const [stalkerVisible, setStalkerVisible] = useState(true);
 
             // Data States with Persistence
             const [newsData, setNewsData] = useLocalStorage('lumina_news', [
@@ -1166,6 +1174,8 @@
             const navigate = (page, id = null) => {
                 setCurrentPage(page);
                 if (id) setDetailId(id);
+                // Reset stalker visibility on navigation
+                setStalkerVisible(true);
             };
 
             const addReservation = (data) => {
@@ -1193,13 +1203,13 @@
                     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
                     `}</style>
 
-                    <MouseStalker />
+                    <MouseStalker visible={stalkerVisible} />
                     {currentPage !== 'admin' && <Header currentPage={currentPage} navigate={navigate} isScrolled={isScrolled} />}
                     
-                    {currentPage === 'home' && <HomePage navigate={navigate} newsData={newsData} />}
+                    {currentPage === 'home' && <HomePage navigate={navigate} newsData={newsData} setStalkerVisible={setStalkerVisible} />}
                     {currentPage === 'doctors' && <DoctorsPage />}
                     {currentPage === 'services' && <ServicesPage navigate={navigate} coursesData={coursesData} />}
-                    {currentPage === 'access' && <AccessPage />}
+                    {currentPage === 'access' && <AccessPage setStalkerVisible={setStalkerVisible} />}
                     {currentPage === 'contact' && <ContactPage />}
                     {currentPage === 'recruit' && <RecruitPage />}
                     {currentPage === 'privacy' && <PrivacyPage />}
